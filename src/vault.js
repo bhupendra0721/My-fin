@@ -212,8 +212,18 @@ export async function restoreIntoVault({ jsonText, recoveryPassword, newPin, dow
   const restored = await restoreRecoveryBackup(jsonText, recoveryPassword);
   const freshBackup = await createRecoveryBackup(restored, recoveryPassword);
   await downloadBackup(freshBackup);
-  if (await dbGet()) await dbDelete();
-  return createVault(restored, newPin, recoveryPassword);
+  const previous = await dbGet();
+  const replacement = await buildVault(restored, newPin, recoveryPassword);
+  try {
+    await dbPut(replacement);
+    const verified = await decryptVault(await dbGet(), newPin, "pin");
+    if (JSON.stringify(verified) !== JSON.stringify(restored)) throw new Error("Restored data verification failed.");
+    return { transactionCount: verified.transactions.length };
+  } catch (error) {
+    if (previous) await dbPut(previous);
+    else await dbDelete();
+    throw error;
+  }
 }
 export async function removeVault() { await dbDelete(); }
 export const VAULT_CONSTANTS = Object.freeze({ DB_NAME, STORE_NAME, LEGACY_KEY, ITERATIONS, FORMAT });
