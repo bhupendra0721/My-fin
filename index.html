@@ -22,7 +22,7 @@
 <div id="vaultRecoveryPanel" hidden><div class="vault-field"><label for="vaultRecoveryEntry">Recovery password</label><input id="vaultRecoveryEntry" type="password" autocomplete="current-password"></div><div class="vault-field"><label for="vaultNewPin">New PIN (optional, 6–12 digits)</label><input id="vaultNewPin" type="password" inputmode="numeric" maxlength="12" placeholder="Set a replacement PIN"></div><button class="btn primary vault-action" id="vaultRecoverButton">Recover and unlock</button></div>
 <div id="vaultLegacyNotice" class="vault-note" hidden>An older unencrypted copy is still present from an interrupted migration. Unlock, save the new encrypted backup, then finish cleanup.</div></div>
 <div id="vaultCleanup" hidden><h2>Finish safe migration</h2><p class="vault-help">Your encrypted records have been verified. Download the latest encrypted backup, confirm that you saved it, and then the old unencrypted copy can be removed.</p><label class="vault-check"><input type="checkbox" id="vaultCleanupSaved"> I saved the encrypted backup and recovery password.</label><button class="btn primary vault-action" id="vaultCleanupButton">Remove old copy and open app</button></div>
-<p class="vault-foot">No cloud sync. No finance records are sent to an AI service.</p></div></div>\n<div class="app"><aside class="side"><div class="brand"><div class="logo">₹</div><div><b>MyFinance</b><small>Your money, clearly.</small></div></div><nav class="nav" id="sideNav"><button class="active" data-page="home">⌂ &nbsp; Overview</button><button data-page="transactions">⇄ &nbsp; Transactions</button><button data-page="budget">▤ &nbsp; Budgets</button><button data-page="savings">◉ &nbsp; Savings goals</button><button data-page="reports">▥ &nbsp; Reports</button><button data-page="assistant">✧ &nbsp; Money assistant</button><button data-page="settings">⚙ &nbsp; Settings & security</button></nav><div class="sidefoot" id="syncSide">Private · Encrypted on this device</div></aside>
+<p class="vault-foot">Auto-locks after 5 minutes of inactivity or when you leave the app. No cloud sync; finance records are not sent to an AI service.</p></div></div>\n<div class="app"><aside class="side"><div class="brand"><div class="logo">₹</div><div><b>MyFinance</b><small>Your money, clearly.</small></div></div><nav class="nav" id="sideNav"><button class="active" data-page="home">⌂ &nbsp; Overview</button><button data-page="transactions">⇄ &nbsp; Transactions</button><button data-page="budget">▤ &nbsp; Budgets</button><button data-page="savings">◉ &nbsp; Savings goals</button><button data-page="reports">▥ &nbsp; Reports</button><button data-page="assistant">✧ &nbsp; Money assistant</button><button data-page="settings">⚙ &nbsp; Settings & security</button></nav><div class="sidefoot" id="syncSide">Private · Encrypted on this device</div></aside>
 <main class="main"><header class="top"><div><div class="eyebrow">PERSONAL FINANCE</div><h1 id="title">Overview</h1></div><div class="actions"><select id="month" class="month" aria-label="Select month"></select><button class="btn primary" id="quickAdd">＋ Add</button></div></header>
 <section class="section active" id="page-home"><div class="grid stats"><div class="card"><div class="statlabel">Total income</div><div class="statvalue" id="income">₹0</div><div class="statfoot">Selected month</div></div><div class="card"><div class="statlabel">Total expenses</div><div class="statvalue" id="expenses">₹0</div><div class="statfoot">Selected month</div></div><div class="card"><div class="statlabel">Remaining balance</div><div class="statvalue" id="balance">₹0</div><div class="statfoot">Income minus expenses</div></div><div class="card"><div class="statlabel">Savings rate</div><div class="statvalue" id="rate">0%</div><div class="statfoot">Based on recorded income</div></div></div>
 <div class="grid cols"><div class="card"><div class="head"><div><h2>Income vs expenses</h2><div class="sub">Last six months</div></div></div><div class="chart" id="trend"></div><div class="legend"><span><i class="dot"></i>Income</span><span><i class="dot red"></i>Expenses</span></div></div><div class="card"><div class="head"><div><h2>Spending by category</h2><div class="sub">Selected month</div></div></div><div class="ringrow"><div class="ring" id="ring"><div class="ringcenter"><b id="ringTotal">₹0</b><small>SPENT</small></div></div><div class="cats" id="cats"><div class="empty">No expenses yet</div></div></div></div></div>
@@ -43,7 +43,7 @@ const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll
 const INC=['Monthly Salary','Freelancing Income','Business Income','Investment Income','Other Income'];
 const EXP=['Rent','Food','Transportation','Shopping','Electricity and Bills','Entertainment','Education','Medical','EMI and Loans','Travel','Personal Expenses','Other Expenses'];
 const STORE='myfinance-v3';const blank=()=>({transactions:[],budgets:{},goals:[],recurring:[],settings:{theme:'light',budgetAlert:false,billAlert:false}});
-let data=blank(),month=new Date().toISOString().slice(0,7),page='home',vaultRecord=null,vaultMaster=null,vaultReady=false,saveQueue=Promise.resolve();
+let data=blank(),month=new Date().toISOString().slice(0,7),page='home',vaultRecord=null,vaultMaster=null,vaultReady=false,saveQueue=Promise.resolve(),vaultIdleTimer=null;
 function persist(){if(!vaultReady)return;render();const snapshot=JSON.parse(JSON.stringify(data));saveQueue=saveQueue.then(async()=>{vaultRecord=await MyFinanceVault.save(snapshot,vaultRecord,vaultMaster)}).catch(err=>{console.error(err);alert('Your latest change could not be saved securely. Keep the app open and try again. '+err.message)})}
 function fmt(n){return new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(Number(n)||0)}
 function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
@@ -83,10 +83,25 @@ async function finishVaultAccess(){
   localStorage.removeItem('myfinance-cloud');
   vaultReady=true;
   $('#vaultGate').hidden=true;
+  armVaultLock();
   document.body.classList.toggle('dark',data.settings.theme==='dark');
   setupMonth();render();
   if('serviceWorker'in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
+function armVaultLock(){
+  if(vaultIdleTimer)clearTimeout(vaultIdleTimer);
+  if(!vaultReady)return;
+  vaultIdleTimer=setTimeout(()=>lockVault(),5*60*1000);
+}
+async function lockVault(){
+  if(!vaultReady)return;
+  try{await saveQueue}catch(_){}
+  vaultReady=false;vaultMaster=null;data=blank();render();
+  $('#vaultGate').hidden=false;$('#vaultSetup').hidden=true;$('#vaultFinish').hidden=true;$('#vaultCleanup').hidden=true;$('#vaultUnlock').hidden=false;$('#vaultLegacyNotice').hidden=true;$('#vaultRecoveryPanel').hidden=true;$('#vaultError').hidden=true;
+  $('#vaultPinEntry').value='';$('#vaultRecoveryEntry').value='';$('#vaultNewPin').value='';
+}
+['pointerdown','keydown','touchstart'].forEach(evt=>document.addEventListener(evt,()=>armVaultLock(),{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&vaultReady)lockVault()});
 function showVaultError(message){$('#vaultError').textContent=message;$('#vaultError').hidden=false}
 function downloadRecovery(){return MyFinanceVault.exportBackup().then(txt=>download('myfinance-encrypted-recovery-backup.json',txt,'application/json'))}
 async function startVault(){
