@@ -38,7 +38,7 @@
 </main></div>
 <nav class="mobile" id="mobile"><button class="active" data-page="home"><b>⌂</b>Home</button><button data-page="transactions"><b>⇄</b>Activity</button><button data-page="budget"><b>▤</b>Budget</button><button data-page="savings"><b>◉</b>Savings</button><button data-page="assistant"><b>✧</b>Ask</button></nav>
 <div class="modalback" id="back"><div class="modal"><div class="modalhead"><h2 id="modalTitle">Add transaction</h2><button class="close" id="close">×</button></div><form id="modalForm"></form></div></div>
-<script>
+<script src="./vault-core.js"></script><script src="./vault-store.js"></script><script>
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const INC=['Monthly Salary','Freelancing Income','Business Income','Investment Income','Other Income'];
 const EXP=['Rent','Food','Transportation','Shopping','Electricity and Bills','Entertainment','Education','Medical','EMI and Loans','Travel','Personal Expenses','Other Expenses'];
@@ -80,7 +80,6 @@ $('#askForm').onsubmit=e=>{e.preventDefault();let q=$('#ask').value.trim();if(!q
 $('#theme').onchange=e=>{data.settings.theme=e.target.value;document.body.classList.toggle('dark',e.target.value==='dark');persist()};$('#budgetAlert').onchange=e=>{data.settings.budgetAlert=e.target.checked;persist()};$('#billAlert').onchange=e=>{data.settings.billAlert=e.target.checked;persist()};
 async function finishVaultAccess(){
   localStorage.removeItem(STORE);
-  localStorage.removeItem('myfinance-cloud');
   vaultReady=true;
   $('#vaultGate').hidden=true;
   armVaultLock();
