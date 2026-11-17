@@ -26,12 +26,12 @@
     const stored=await get();
     const check=await MyFinanceVaultCore.decryptRecord(stored,pin,'pin',crypto);
     if(JSON.stringify(check.data)!==JSON.stringify(data)) throw new Error('Secure storage verification failed. Original records were not removed.');
-    return {record:stored,data:check.data};
+    return {record:stored,data:check.data,master:check.master};
   }
   async function unlock(secret,mode){
     const record=await get(); if(!record) throw new Error('No secure finance vault was found.');
     const result=await MyFinanceVaultCore.decryptRecord(record,secret,mode,crypto);
-    return {record,data:result.data};
+    return {record,data:result.data,master:result.master};
   }
   async function save(data,record,master){
     const key=master;
@@ -49,7 +49,7 @@
     const check=await get();
     const verified=await MyFinanceVaultCore.decryptRecord(check,recovery,'recovery',crypto);
     if(JSON.stringify(verified.data)!==JSON.stringify(result.data)) throw new Error('Backup restore verification failed.');
-    return {record:check,data:verified.data};
+    return {record:check,data:verified.data,master:verified.master};
   }
   async function exportBackup(){const record=await get();if(!record)throw new Error('No encrypted backup is available yet.');return JSON.stringify(record,null,2);}
   root.MyFinanceVault={
