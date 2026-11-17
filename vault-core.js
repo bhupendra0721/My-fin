@@ -59,7 +59,7 @@
     const key = await derive(secret, salt, crypto);
     try {
       const raw = await open(key, box, crypto);
-      return crypto.subtle.importKey('raw', raw, {name:'AES-GCM'}, false, ['encrypt','decrypt']);
+      return crypto.subtle.importKey('raw', raw, {name:'AES-GCM'}, true, ['encrypt','decrypt']);
     } catch (_) { throw new Error(mode === 'pin' ? 'Incorrect PIN.' : 'Incorrect recovery password.'); }
   }
   async function decryptRecord(record, secret, mode, crypto) {
