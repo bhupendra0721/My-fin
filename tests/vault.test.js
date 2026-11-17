@@ -1,8 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { webcrypto } from "node:crypto";
 import { createRecoveryBackup, restoreRecoveryBackup, VAULT_CONSTANTS } from "../src/vault.js";
-globalThis.crypto = webcrypto;
 const sample = {
   transactions: [{ id: "tx-1", type: "expense", amount: 1250, date: "2026-11-01", category: "Food" }],
   budgets: { Food: 5000 },
