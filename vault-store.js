@@ -44,7 +44,12 @@
     const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);
     const b64=b=>{let s='';new Uint8Array(b).forEach(v=>s+=String.fromCharCode(v));return btoa(s);};
     const next=Object.assign({},record,{payload:{iv:b64(iv),cipher:b64(cipher)},updatedAt:new Date().toISOString()});
-    await put(next); return next;
+    await put(next);
+    const saved=await get();
+    const decode64=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
+    const verified=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode64(saved.payload.iv)},key,decode64(saved.payload.cipher));
+    if(new TextDecoder().decode(verified)!==JSON.stringify(data)) throw new Error('Encrypted save verification failed.');
+    return saved;
   }
   async function importBackup(text,recovery){
     let record; try{record=JSON.parse(text);}catch(_){throw new Error('This file is not a valid backup.');}
