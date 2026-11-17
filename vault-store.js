@@ -13,8 +13,12 @@
     const db=await openDb();
     try{return await new Promise((resolve,reject)=>{
       const tx=db.transaction(STORE,mode), os=tx.objectStore(STORE), req=action(os);
-      req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error||new Error('Secure storage operation failed.'));
-      tx.onabort=()=>reject(tx.error||new Error('Secure storage transaction failed.'));
+      let result;
+      req.onsuccess=()=>{result=req.result;};
+      req.onerror=()=>reject(req.error||new Error('Secure storage operation failed.'));
+      tx.oncomplete=()=>resolve(result);
+      tx.onerror=()=>reject(tx.error||new Error('Secure storage transaction failed.'));
+      tx.onabort=()=>reject(tx.error||new Error('Secure storage transaction was cancelled.'));
     });} finally {db.close();}
   }
   async function get(){return (await request('readonly',os=>os.get(KEY)))||null;}
