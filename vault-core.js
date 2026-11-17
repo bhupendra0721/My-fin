@@ -34,7 +34,7 @@
       data.settings && typeof data.settings === 'object';
   }
   async function createRecord(data, pin, recovery, crypto) {
-    if (!/^\\d{6,12}$/.test(pin)) throw new Error('PIN must contain 6 to 12 digits.');
+    if (!/^\d{6,12}$/.test(pin)) throw new Error('PIN must contain 6 to 12 digits.');
     if (typeof recovery !== 'string' || recovery.trim().length < 14) throw new Error('Recovery password must be at least 14 characters.');
     if (!validData(data)) throw new Error('Finance data did not pass validation.');
     const masterRaw = random(crypto, 32);
@@ -75,7 +75,7 @@
     }
   }
   async function changePin(record, oldSecret, newPin, mode, crypto) {
-    if (!/^\\d{6,12}$/.test(newPin)) throw new Error('New PIN must contain 6 to 12 digits.');
+    if (!/^\d{6,12}$/.test(newPin)) throw new Error('New PIN must contain 6 to 12 digits.');
     const master = await unwrap(record, oldSecret, mode, crypto);
     const raw = await crypto.subtle.exportKey('raw', master);
     const salt = random(crypto, 16);
