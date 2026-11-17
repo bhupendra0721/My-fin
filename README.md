@@ -1,25 +1,33 @@
 # MyFinance
 
-A mobile-first, installable personal finance tracker for a single user.
+A mobile-first personal finance app designed for Android, desktop and mobile browsers.
 
-## Included in this first working version
-- Dashboard totals and six-month income/expense trend
-- Add, edit, delete, search and filter transactions
-- Monthly category budgets with 50%, 80% and 100% indicators
+## Features
+- Monthly dashboard: income, expenses, balance, savings rate and six-month trend
+- Income and expense transactions with categories, search, filters, edit and delete
+- Category budgets with 80% and 100% warning colours
 - Savings goals and progress tracking
-- Data-based finance assistant for common questions
-- Monthly CSV export (Excel-compatible), print-to-PDF, JSON backup and restore
-- Light/dark theme and offline app shell
+- Monthly reports, category summaries, CSV export, JSON backup/restore and print-to-PDF
+- Local finance assistant that answers from saved records only
+- Dark/light mode, recurring payment schedules and EMI category tracking
+- Installable PWA and offline app shell
+- Optional Supabase account and cloud sync between devices
 
-## Run it
-Open `index.html` in a modern browser or publish the repository with GitHub Pages. For Android, open the deployed HTTPS site in Chrome and choose **Install app** / **Add to Home screen**.
+## Run the app
+Open `index.html` in a modern browser or deploy this repository using GitHub Pages. For Android, open the HTTPS site in Chrome and choose Install app / Add to Home screen.
 
-## Privacy and limitations
-This version stores records in the browser's localStorage on the device. It has no bank connection, cloud sync, account login, or server-side encryption. Do not clear browser storage unless you have a backup. Export a JSON backup regularly. The assistant uses transparent local rules and recorded app data; it is not a connected generative-AI service and does not make verified affordability decisions. CSV is Excel-compatible; use the browser print dialog to save reports as PDF.
+## Set up cloud sync
+1. Create a Supabase project at https://supabase.com/.
+2. Open SQL Editor and run all of `supabase/schema.sql`.
+3. In Project Settings > API, copy the Project URL and anon/publishable key.
+4. In MyFinance > Settings & sync, save those values, create an account, then sign in.
+5. Open the deployed app on another device and sign in using the same account.
 
-## Suggested next development steps
-1. Add device-level authentication and encrypted database storage.
-2. Add recurring transactions, bill reminders, EMI schedules and notification permissions.
-3. Add secure optional cloud backup and restore.
-4. Add an AI provider integration only after choosing a provider and protecting its API key on a backend.
-5. Add automated tests for calculations and import/export.
+Only use the public anon/publishable key in the browser. Never use a service-role key in this app. Row Level Security ensures each signed-in user can access only their own row.
+
+## Important limitations
+- Until cloud sync is configured, data is stored in this browser only. Back up before changing devices or clearing browser data.
+- The first sync asks whether to load existing cloud data or upload this device's data. Make a backup first and choose carefully.
+- Sync runs after saved changes and on sign-in; this is not real-time collaborative editing.
+- The assistant is rule-based, not a connected generative AI service.
+- Recurring schedules are stored for reference; automatic payment creation, push notifications, bank connections and SMS reading are not included yet.
