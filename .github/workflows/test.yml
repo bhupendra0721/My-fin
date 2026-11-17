@@ -1,0 +1,30 @@
+name: Test MyFinance
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test vault cryptography
+        run: node --test tests/vault.test.cjs
+      - name: Check JavaScript syntax
+        run: |
+          node --check vault-core.js
+          node --check vault-store.js
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
+            .map(match => match[1]).filter(source => source.trim());
+          if (!scripts.length) throw new Error('No inline application script found');
+          fs.writeFileSync('/tmp/myfinance-inline.js', scripts.join('\\n'));
+          NODE
+          node --check /tmp/myfinance-inline.js
