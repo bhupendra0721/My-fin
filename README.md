@@ -31,3 +31,7 @@ Only use the public anon/publishable key in the browser. Never use a service-rol
 - Sync runs after saved changes and on sign-in; this is not real-time collaborative editing.
 - The assistant is rule-based, not a connected generative AI service.
 - Recurring schedules are stored for reference; automatic payment creation, push notifications, bank connections and SMS reading are not included yet.
+
+
+## Deployment
+GitHub Pages is deployed from the GitHub Actions workflow in `.github/workflows/deploy.yml`. Set the repository's Pages source to **GitHub Actions** in Settings > Pages. Each push to `main` starts a fresh deployment.
